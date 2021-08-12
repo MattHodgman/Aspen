@@ -3,5 +3,5 @@ A script and supporting files that can construct a tree using the MeSH terms of 
 
 Example usage:
 ```
-python3 makeTree.py tofacitinib
+python3 makeTree.py tofacitinib .
 ```
