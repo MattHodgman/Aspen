@@ -2,7 +2,7 @@ import pickle
 from graphviz import Digraph
 import sys
 
-# PARAMETER: the name or ChEMBL ID of a drug. Output tree .png files are written to the dir 'trees'
+# PARAMETERS: (1) the name or ChEMBL ID of a drug (2) Output dir where tree .png files are written
 
 ## GET RESOURCES
 
@@ -22,6 +22,7 @@ chembl_mesh_headings = set(chembl.mesh_heading)
 ## GET DATA
 
 drug = sys.argv[1]
+out = sys.argv[2]
 
 # get indications
 if 'CHEMBL' in drug:
@@ -96,5 +97,4 @@ for n in numbers:
             dot.edge(id[0],id)
 
 # save results
-dot.render(f'trees/{drug}.gv', view=True)  
-
+dot.render(f'{out}/{drug}.gv', view=False)
