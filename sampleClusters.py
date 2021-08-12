@@ -34,7 +34,7 @@ for label, drugs in cluster_dict.items():
     # get the mean number of indications per drug
     mean = cluster_chembl.groupby('pref_name')['mesh_heading'].count().mean()
 
-    print(f'\n\nCluster: {label}\nNumber of Drugs: {len(drugs)}\nMean Number of Indications: {mean}\n{indications}')
+    print(f'\n\nCluster: {label}\nNumber of Drugs: {len(drugs)}f\nMean Number of Indications: {mean}\n{indications}')
 
     
 
