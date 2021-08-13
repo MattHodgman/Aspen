@@ -29,12 +29,12 @@ for label, drugs in cluster_dict.items():
     # format to get proportion of drugs that have each indication
     indications = indications.to_frame()
     indications['proportion'] = indications['pref_name'] / len(drugs)
-    indications.drop('pref_name',axis=1)
+    indications = indications.drop('pref_name',axis=1)
 
     # get the mean number of indications per drug
     mean = cluster_chembl.groupby('pref_name')['mesh_heading'].count().mean()
 
-    print(f'\n\nCluster: {label}\nNumber of Drugs: {len(drugs)}f\nMean Number of Indications: {mean}\n{indications}')
+    print(f'\n\nCluster: {label}\nNumber of Drugs: {len(drugs)}\nMean Number of Indications: {mean}\n{indications}')
 
     
 
