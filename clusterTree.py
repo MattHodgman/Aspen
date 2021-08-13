@@ -1,8 +1,10 @@
 from graphviz import Digraph
 import sys
 import pandas as pd
+import pickle
+import matplotlib.pyplot as plt
 
-# PARAMETERS: (1) file containing a list of drugs in a cluster (2) output dir
+# PARAMETERS: (1) cluster label tsv (2) cluster id (3) output dir
 
 # read the drug list file (one drug per line) into a list
 def readDrugList(file_name):
@@ -13,41 +15,27 @@ def readDrugList(file_name):
 
 
 # get the indications of all the drugs
-def getIndications(drug_list):
-    chembl = chembl[chembl['pref_name'].isin(drug_list)]
-    chembl.mesh_heading
+def getIndications(drug_list, chembl):
+    chembl = chembl[chembl['pref_name'].isin(drug_list)] # subset to only drugs in cluster
+    indications = chembl.groupby('mesh_heading').count()['mesh_id'].to_frame() # get dataframe of the number of times each indication appears
+    return indications
 
 
-if __name__ == "__main__":
-    # load in ChEMBL
-    chembl = pd.read_csv('chembl_indications.tsv', sep='\t')
+# make a color map for indications
+def makeColorMap(indications):
+    from matplotlib import colors
+    norm = colors.Normalize(indications.min(), indications.max())
+    return norm
+    
 
-    # get args
-    drug_file_name = sys.argv[1] # a file that contains a list of drugs (one per line) that are in a single cluster
-    out = sys.argv[2] # the output dir
+# make a DAG of mesh headings
+def makeGraph(numbers, indications):
 
-    drug_list = readDrugList(drug_file_name) # get list of drugs in cluster
-    indications = getIndications(drug_list) # get indications of all drugs in cluster
-
-    # get indications
-
-
-    # check if drug is in chembl_indications.tsv
-    if len(headings) == 0:
-        print(f'{drug} not found.')
-        sys.exit()
-
-    # get drug indications' heading numbers
-    numbers = []
-    for h in headings:
-        numbers.extend(mesh_headings[h])
-    numbers = sorted(numbers) # sort them
-
-
-    ## MAKE GRAPH
+    # get color gradient
+    norm = makeColorMap(indications)
 
     # create graph
-    dot = Digraph(comment=f'{drug} indications', strict=True)
+    dot = Digraph(comment='cluster indications', strict=True)
 
     # add nodes
     s = '.'
@@ -84,7 +72,11 @@ if __name__ == "__main__":
             # add node with id if doesn't already exist
             if id not in dot.body:
                 if num in numbers:
-                    dot.node(id, mesh_numbers[num], color = 'red')
+                    heading = mesh_numbers[num]
+                    count = indications.loc[heading]['mesh_id']
+                    rgba = plt.cm.autumn(norm(count))
+                    hsv = ' '.join(map(str,rgba))
+                    dot.node(id, f'{mesh_numbers[num]} ({count})', color='red')
                 else:
                     dot.node(id, mesh_numbers[num])
 
@@ -98,4 +90,47 @@ if __name__ == "__main__":
                 dot.edge(id[0],id)
 
     # save results
-    dot.render(f'{out}/{drug}.gv', view=False)
+    dot.render(f'{out}/cluster_{cluster}.gv', view=False)
+
+
+# main
+if __name__ == "__main__":
+
+    ## GET DATA
+
+    # load in ChEMBL
+    chembl = pd.read_csv('chembl_indications.tsv', sep='\t')
+
+    # load in MeSH pickle files
+    f = open("mesh_headings.pkl", "rb")
+    mesh_headings = pickle.load(f)
+
+    f = open("mesh_numbers.pkl", "rb")
+    mesh_numbers = pickle.load(f)
+
+    # get args
+    clusters = pd.read_csv(sys.argv[1],delimiter='\t') # a file that contains a list of drugs (one per line) that are in a single cluster
+    cluster = sys.argv[2] # the id of the cluster
+    out = sys.argv[3] # the output dir
+
+
+    ## GET INDICATIONS
+
+    drug_list = clusters[clusters['Cluster'] == int(cluster)]['Drug'].tolist() # get list of drugs in cluster
+
+    indications = getIndications(drug_list, chembl) # get indications of all drugs in cluster
+    headings = indications.index.tolist()
+
+    # get drug indications' heading numbers
+    numbers = []
+    for h in headings:
+        numbers.extend(mesh_headings[h])
+    numbers = sorted(numbers) # sort them
+
+
+    ## GRAPH
+
+    # make graph
+    makeGraph(numbers, indications)
+
+    
