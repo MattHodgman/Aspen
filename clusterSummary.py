@@ -12,7 +12,7 @@ import pickle
 # mesh_numbers = pickle.load(f)
 
 # load in ChEMBL
-chembl = pd.read_csv('chembl_indications.tsv', sep='\t')
+chembl = pd.read_csv('chembl_indications.tsv', delimiter='\t')
 # chembl_mesh_headings = set(chembl.mesh_heading)
 
 # get clusters
